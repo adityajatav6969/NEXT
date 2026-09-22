@@ -31,3 +31,7 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Local tooling archives
+mingit/
+mingit.zip

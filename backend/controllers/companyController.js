@@ -45,10 +45,6 @@ export const getCompanyById = async (req, res) => {
 // @access  Private
 export const toggleFollowCompany = async (req, res) => {
   try {
-    if (req.user.role === 'guest') {
-      return res.status(403).json({ message: 'Guest users cannot follow companies.' });
-    }
-
     const company = await Company.findById(req.params.id);
     if (!company) {
       return res.status(404).json({ message: 'Company not found' });

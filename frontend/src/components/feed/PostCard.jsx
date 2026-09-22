@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThumbsUp, MessageCircle, Share2, Bookmark, MoreHorizontal, Heart, Smile, BadgeCheck, Send, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { usePosts } from '../../context/PostContext';
 import Avatar from '../ui/Avatar';
@@ -23,13 +24,7 @@ const PostCard = ({ post }) => {
   const timeDisplay = post.timeAgo || formatTimeAgo(post.createdAt || post.updatedAt);
   const likesCount = Array.isArray(post.likes) ? post.likes.length : (post.likes || 0);
   const commentsCount = Array.isArray(post.comments) ? post.comments.length : (post.comments || 0);
-  const isGuest = user?.role === 'guest';
-
   const handleReact = (r) => {
-    if (isGuest) {
-      alert('Sign up to like posts!');
-      return;
-    }
     setReaction(reaction === r ? null : r);
     setShowReactions(false);
     if (!post.isLiked) likePost(post._id || post.id);
@@ -37,10 +32,6 @@ const PostCard = ({ post }) => {
 
   const handleComment = (e) => {
     e.preventDefault();
-    if (isGuest) {
-      alert('Sign up to comment!');
-      return;
-    }
     if (!comment.trim()) return;
     setLocalComments([...localComments, { id: Date.now(), text: comment, author: user?.name, timeAgo: 'now' }]);
     setComment('');
@@ -56,12 +47,16 @@ const PostCard = ({ post }) => {
       <div className="p-4 pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-3">
-            <Avatar name={author.name} size="md" />
+            <Link to={author._id ? `/profile/${author._id}` : '#'}>
+              <Avatar name={author.name} size="md" />
+            </Link>
             <div>
               <div className="flex items-center gap-1.5">
-                <h4 className="text-sm font-semibold text-dark-900 dark:text-dark-100 hover:text-brand-500 cursor-pointer transition-colors">
-                  {author.name}
-                </h4>
+                <Link to={author._id ? `/profile/${author._id}` : '#'}>
+                  <h4 className="text-sm font-semibold text-dark-900 dark:text-dark-100 hover:text-brand-500 cursor-pointer transition-colors">
+                    {author.name}
+                  </h4>
+                </Link>
                 {author.isVerified && (
                   <BadgeCheck className="w-4 h-4 text-brand-500 flex-shrink-0" />
                 )}
@@ -129,18 +124,17 @@ const PostCard = ({ post }) => {
         {/* Like with reactions */}
         <div className="relative flex-1">
           <motion.button
-            whileTap={!isGuest ? { scale: 0.9 } : {}}
-            onMouseEnter={() => !isGuest && setShowReactions(true)}
-            onMouseLeave={() => !isGuest && setTimeout(() => setShowReactions(false), 300)}
+            whileTap={{ scale: 0.9 }}
+            onMouseEnter={() => setShowReactions(true)}
+            onMouseLeave={() => setTimeout(() => setShowReactions(false), 300)}
             onClick={() => {
-              if (isGuest) return alert('Sign up to like posts!');
               likePost(post._id || post.id);
             }}
             className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors ${
               post.isLiked 
                 ? 'text-brand-500 bg-brand-50 dark:bg-brand-900/20' 
                 : 'text-dark-500 dark:text-dark-400 hover:bg-dark-100 dark:hover:bg-dark-700'
-            } ${isGuest ? 'cursor-not-allowed opacity-70' : ''}`}
+            }`}
           >
             {reaction ? <span className="text-base">{reaction}</span> : <ThumbsUp className="w-4 h-4" />}
             <span>Like</span>
@@ -186,12 +180,11 @@ const PostCard = ({ post }) => {
 
         <button
           onClick={() => {
-            if (isGuest) return alert('Sign up to save posts!');
             savePost(post._id || post.id);
           }}
           className={`flex items-center justify-center p-2 rounded-lg transition-colors ${
             post.isSaved ? 'text-brand-500' : 'text-dark-500 dark:text-dark-400 hover:bg-dark-100 dark:hover:bg-dark-700'
-          } ${isGuest ? 'cursor-not-allowed opacity-70' : ''}`}
+          }`}
         >
           <Bookmark className={`w-4 h-4 ${post.isSaved ? 'fill-current' : ''}`} />
         </button>
@@ -217,17 +210,16 @@ const PostCard = ({ post }) => {
                 </div>
               ))}
               <form onSubmit={handleComment} className="flex gap-2">
-                <Avatar name="Alex Rivera" size="xs" />
+                <Avatar name={user?.name || 'User'} size="xs" />
                 <div className="flex-1 flex items-center gap-2 bg-dark-50 dark:bg-dark-700 rounded-xl px-3 py-2">
                   <input
                     type="text"
                     value={comment}
-                    disabled={isGuest}
                     onChange={(e) => setComment(e.target.value)}
-                    placeholder={isGuest ? "Sign up to comment..." : "Write a comment..."}
-                    className="flex-1 bg-transparent text-sm text-dark-800 dark:text-dark-200 placeholder-dark-400 focus:outline-none disabled:opacity-50"
+                    placeholder="Write a comment..."
+                    className="flex-1 bg-transparent text-sm text-dark-800 dark:text-dark-200 placeholder-dark-400 focus:outline-none"
                   />
-                  <button type="submit" disabled={isGuest} className="text-brand-500 hover:text-brand-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  <button type="submit" className="text-brand-500 hover:text-brand-600 transition-colors">
                     <Send className="w-4 h-4" />
                   </button>
                 </div>

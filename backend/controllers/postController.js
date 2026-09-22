@@ -60,6 +60,10 @@ export const getPosts = async (req, res) => {
     const currentUserId = req.user._id.toString();
 
     const query = cursor ? { _id: { $lt: cursor } } : {};
+    
+    if (req.query.userId) {
+      query.user = req.query.userId;
+    }
 
     const posts = await Post.find(query)
       .populate('user', 'name avatar title company')

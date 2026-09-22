@@ -1,26 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import Avatar from '../components/ui/Avatar';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
-import { MapPin, Link2, BadgeCheck, Edit, Plus, Briefcase, GraduationCap, X, Check, Globe } from 'lucide-react';
+import { MapPin, Link2, BadgeCheck, Edit, Plus, Briefcase, GraduationCap, X, Check, Globe, MessageSquare } from 'lucide-react';
 import { formatNumber } from '../utils/helpers';
+import PostCard from '../components/feed/PostCard';
+import { PostSkeleton } from '../components/ui/Skeletons';
 
 const ProfilePage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user, login } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('about');
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState([]);
+  const [postsLoading, setPostsLoading] = useState(false);
 
   // Use the ID from URL, or fallback to the logged-in user's ID
   const targetId = id || user?._id || user?.id;
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfileData = async () => {
       setLoading(true);
       try {
         const { data } = await api.get(`/users/profile/${targetId}`);
@@ -31,7 +36,23 @@ const ProfilePage = () => {
         setLoading(false);
       }
     };
-    if (targetId) fetchProfile();
+
+    const fetchUserPosts = async () => {
+      setPostsLoading(true);
+      try {
+        const { data } = await api.get(`/posts?userId=${targetId}`);
+        setPosts(data.posts || []);
+      } catch (err) {
+        console.error('Failed to load user posts', err);
+      } finally {
+        setPostsLoading(false);
+      }
+    };
+
+    if (targetId) {
+      fetchProfileData();
+      fetchUserPosts();
+    }
   }, [targetId]);
 
   const handleSaveProfile = async () => {
@@ -49,7 +70,7 @@ const ProfilePage = () => {
     }
   };
 
-  const tabs = ['About', 'Experience', 'Education', 'Skills', 'Projects'];
+  const tabs = ['About', 'Posts', 'Experience', 'Education', 'Skills'];
 
   if (loading) {
     return (
@@ -100,9 +121,19 @@ const ProfilePage = () => {
                     <Edit className="w-4 h-4" /> Edit Profile
                   </motion.button>
                 ) : (
-                  <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="btn-brand">
-                    Connect
-                  </motion.button>
+                  <>
+                    <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="btn-brand">
+                      Connect
+                    </motion.button>
+                    <motion.button 
+                      whileHover={{ scale: 1.02 }} 
+                      whileTap={{ scale: 0.98 }} 
+                      onClick={() => navigate('/messages', { state: { targetUser: profile } })}
+                      className="btn-outline flex items-center gap-2 text-brand-600 border-brand-200 hover:bg-brand-50 dark:border-brand-800 dark:text-brand-400 dark:hover:bg-brand-900/30"
+                    >
+                      <MessageSquare className="w-4 h-4" /> Message
+                    </motion.button>
+                  </>
                 )}
               </div>
             </div>
@@ -190,6 +221,24 @@ const ProfilePage = () => {
                     <p className="text-sm text-dark-400 col-span-2">No achievements added yet.</p>
                   )}
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'posts' && (
+              <div className="space-y-4">
+                {postsLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2].map((i) => <PostSkeleton key={i} />)}
+                  </div>
+                ) : posts.length > 0 ? (
+                  posts.map((post) => (
+                    <PostCard key={post._id || post.id} post={post} />
+                  ))
+                ) : (
+                  <div className="card p-12 text-center">
+                    <p className="text-dark-400">No posts found</p>
+                  </div>
+                )}
               </div>
             )}
 

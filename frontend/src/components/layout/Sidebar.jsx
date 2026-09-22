@@ -7,15 +7,14 @@ import {
   TrendingUp, Hash
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useMockData } from '../../context/MockDataContext';
-import { trendingTopics } from '../../data/mockData';
+
 import Avatar from '../ui/Avatar';
 import { formatNumber } from '../../utils/helpers';
 
 const Sidebar = () => {
   const location = useLocation();
   const { user } = useAuth();
-  const { unreadMessages } = useMockData();
+
 
   const isActive = (path) => {
     if (path === '/') return location.pathname === '/';
@@ -26,7 +25,7 @@ const Sidebar = () => {
     { path: '/', icon: Home, label: 'Home Feed' },
     { path: '/network', icon: Users, label: 'My Network' },
     { path: '/jobs', icon: Briefcase, label: 'Jobs' },
-    { path: '/messages', icon: MessageCircle, label: 'Messages', badge: unreadMessages },
+    { path: '/messages', icon: MessageCircle, label: 'Messages', badge: 0 },
     { path: '/explore', icon: Compass, label: 'Discover' },
     { path: '/companies', icon: Building2, label: 'Companies' },
   ];
@@ -42,7 +41,7 @@ const Sidebar = () => {
         {/* Profile mini card */}
         <div className="card p-4">
           <Link to="/profile" className="flex items-center gap-3 mb-3 group">
-            <Avatar name={user?.name || 'Guest User'} size="md" showRing />
+            <Avatar name={user?.name || 'User'} size="md" showRing />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm text-dark-900 dark:text-dark-100 group-hover:text-brand-500 transition-colors truncate">{user?.name}</p>
               <p className="text-xs text-dark-400 truncate">{user?.title || 'Member'}</p>
@@ -94,24 +93,7 @@ const Sidebar = () => {
           ))}
         </nav>
 
-        {/* Trending */}
-        <div className="card p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="w-4 h-4 text-brand-500" />
-            <h3 className="text-sm font-semibold text-dark-900 dark:text-dark-100">Trending</h3>
-          </div>
-          <div className="space-y-2">
-            {trendingTopics.slice(0, 4).map((topic, i) => (
-              <Link key={topic.id} to={`/explore?tag=${topic.tag}`} className="flex items-center gap-2 group">
-                <span className="text-xs text-dark-300 w-4">{i + 1}</span>
-                <div>
-                  <p className="text-xs font-medium text-dark-700 dark:text-dark-200 group-hover:text-brand-500 transition-colors">#{topic.tag}</p>
-                  <p className="text-[10px] text-dark-400">{formatNumber(topic.posts)} posts</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
+
       </div>
     </aside>
   );

@@ -1,4 +1,5 @@
 import { matchedData } from 'express-validator';
+import mongoose from 'mongoose';
 import User from '../models/User.js';
 import { io } from '../server.js';
 import { sanitizeUser } from '../utils/auth.js';
@@ -136,19 +137,23 @@ export const getNetwork = async (req, res) => {
       .populate('following', 'name title company avatar location skills followers role')
       .populate('followers', 'name title company avatar location skills followers role');
 
-    const excludedIds = [...user.following.map((id) => id._id || id), user._id];
-    const suggested = await User.find({
-      _id: { $nin: excludedIds },
-    })
+    // Filter out any nulls in case referenced users were deleted
+    const validFollowing = (user.following || []).filter(u => u != null);
+    const validFollowers = (user.followers || []).filter(u => u != null);
+
+    const excludedIds = [...validFollowing.map((id) => id._id || id), user._id];
+    const suggested = await User.find({ _id: mongoose.trusted({ $nin: excludedIds }) })
+      .sort({ createdAt: -1 })
       .limit(15)
       .select('name title company avatar location skills followers role');
 
     return res.json({
-      following: user.following,
-      followers: user.followers,
+      following: validFollowing,
+      followers: validFollowers,
       suggested,
     });
   } catch (error) {
+    console.error('getNetwork error:', error);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -158,13 +163,13 @@ export const getNetwork = async (req, res) => {
 // @access  Private
 export const getExploreUsers = async (req, res) => {
   try {
-    const users = await User.find({})
-      .sort({ connections: -1, createdAt: -1 })
-      .limit(20)
+    // Show all users except the current one, sorted by newest first
+    const users = await User.find({ _id: mongoose.trusted({ $ne: req.user._id }) })
+      .sort({ createdAt: -1 })
       .select('name title company avatar location skills followers role');
 
     const currentUser = await User.findById(req.user._id).select('following');
-    const followingStrs = currentUser.following.map((id) => id.toString());
+    const followingStrs = (currentUser.following || []).map((id) => id.toString());
 
     const result = users.map((user) => ({
       ...user.toObject(),
@@ -174,6 +179,7 @@ export const getExploreUsers = async (req, res) => {
 
     return res.json(result);
   } catch (error) {
+    console.error('getExploreUsers error:', error);
     return res.status(500).json({ message: error.message });
   }
 };

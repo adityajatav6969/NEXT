@@ -64,8 +64,6 @@ const AudiencePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, completeAuth } = useAuth();
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState('');
 
   React.useEffect(() => {
     if (!location.hash) {
@@ -84,21 +82,6 @@ const AudiencePage = () => {
       target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }, [location.hash]);
-
-  const handleGuestLogin = async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      const { data } = await api.post('/auth/guest');
-      await completeAuth(data);
-      navigate('/');
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Guest login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-dark-950 text-white overflow-hidden relative font-sans">
@@ -294,27 +277,15 @@ const AudiencePage = () => {
                   Open Feed
                 </Link>
               ) : (
-                <>
                   <Link
                     to="/signup"
                     className="px-6 py-3 rounded-xl bg-white text-dark-950 font-semibold text-center hover:bg-dark-100 transition-colors"
                   >
                     Join Free
                   </Link>
-                  <button
-                    type="button"
-                    onClick={handleGuestLogin}
-                    disabled={loading}
-                    className="px-6 py-3 rounded-xl border border-white/15 text-white font-medium hover:bg-white/5 transition-colors disabled:opacity-70"
-                  >
-                    {loading ? 'Opening guest access...' : 'Explore as Guest'}
-                  </button>
-                </>
               )}
             </div>
           </div>
-
-          {error && <p className="mt-4 text-sm text-rose-300">{error}</p>}
         </motion.section>
       </main>
     </div>

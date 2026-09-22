@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/ui/Avatar';
@@ -9,12 +10,15 @@ import { Send, Smile, Paperclip, Phone, Video, MoreHorizontal, Search, Check, Ch
 
 const MessagesPage = () => {
   const { user: currentUser, socket } = useAuth();
+  const location = useLocation();
+  const targetUser = location.state?.targetUser;
+
   const [conversations, setConversations] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [typing, setTyping] = useState(false);
-  const [mobileView, setMobileView] = useState('list'); // 'list' | 'chat'
+  const [mobileView, setMobileView] = useState(targetUser ? 'chat' : 'list'); // 'list' | 'chat'
   const bottomRef = useRef(null);
 
   const activeConv = conversations.find(c => c.user._id === activeConversationId);
@@ -23,8 +27,22 @@ const MessagesPage = () => {
     const fetchConversations = async () => {
       try {
         const { data } = await api.get('/messages/conversations');
-        setConversations(data);
-        if (data.length > 0 && !activeConversationId) {
+        let initialConversations = data;
+
+        if (targetUser && !data.some(c => c.user._id === targetUser._id || c.user.id === targetUser._id)) {
+          initialConversations = [{
+            user: targetUser,
+            lastMessage: { text: 'Start a conversation' },
+            unreadCount: 0,
+            updatedAt: new Date().toISOString()
+          }, ...data];
+        }
+
+        setConversations(initialConversations);
+
+        if (targetUser) {
+          setActiveConversationId(targetUser._id || targetUser.id);
+        } else if (data.length > 0 && !activeConversationId) {
           setActiveConversationId(data[0].user._id);
         }
       } catch (err) {

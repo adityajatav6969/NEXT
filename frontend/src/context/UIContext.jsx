@@ -1,17 +1,44 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const UIContext = createContext(null);
 
 export const UIProvider = ({ children }) => {
-  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
 
-  const toggleCommandPalette = useCallback(() => {
-    setCommandPaletteOpen((prev) => !prev);
+  // Initialize theme
+  useEffect(() => {
+    const isDark = localStorage.getItem('theme') === 'dark' || 
+      (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    
+    setDarkMode(isDark);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  const toggleDarkMode = useCallback(() => {
+    setDarkMode((prev) => {
+      const next = !prev;
+      if (next) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+      return next;
+    });
   }, []);
 
   const value = {
-    commandPaletteOpen,
-    toggleCommandPalette,
+    darkMode,
+    toggleDarkMode,
+    sidebarOpen,
+    setSidebarOpen,
+    rightSidebarOpen,
+    setRightSidebarOpen
   };
 
   return <UIContext.Provider value={value}>{children}</UIContext.Provider>;

@@ -9,7 +9,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useUI } from '../../context/UIContext';
-import { useMockData } from '../../context/MockDataContext';
+
 import Avatar from '../ui/Avatar';
 
 const Navbar = () => {
@@ -17,8 +17,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { darkMode, toggleDarkMode } = useTheme();
-  const { toggleCommandPalette } = useUI();
-  const { unreadMessages } = useMockData();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -44,7 +43,7 @@ const Navbar = () => {
     { path: '/', icon: Home, label: 'Home' },
     { path: '/network', icon: Users, label: 'Network' },
     { path: '/jobs', icon: Briefcase, label: 'Jobs' },
-    { path: '/messages', icon: MessageCircle, label: 'Messages', badge: unreadMessages },
+    { path: '/messages', icon: MessageCircle, label: 'Messages', badge: 0 },
     { path: '/explore', icon: Compass, label: 'Explore' },
   ];
 
@@ -141,16 +140,6 @@ const Navbar = () => {
             {mobileSearchOpen ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
           </button>
 
-          {/* Command Palette — desktop only */}
-          <button
-            onClick={toggleCommandPalette}
-            className="hidden md:flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-dark-400 hover:text-dark-600 dark:hover:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-800 transition-colors text-xs"
-            title="Command Palette (Ctrl+K)"
-          >
-            <Command className="w-3.5 h-3.5" />
-            <span className="text-dark-300">K</span>
-          </button>
-
           {/* Dark mode toggle */}
           <button
             onClick={toggleDarkMode}
@@ -175,7 +164,7 @@ const Navbar = () => {
               onClick={() => setProfileOpen(!profileOpen)}
               className="flex items-center gap-1.5 pl-1 pr-1.5 py-1 rounded-lg hover:bg-dark-100 dark:hover:bg-dark-800 transition-all"
             >
-              <Avatar name={user?.name || 'Guest User'} size="sm" showRing />
+              <Avatar name={user?.name || 'User'} size="sm" showRing />
               <ChevronDown className={`w-3 h-3 text-dark-400 hidden sm:block transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
             </button>
 
@@ -189,7 +178,7 @@ const Navbar = () => {
                   className="absolute right-0 top-full mt-2 w-60 bg-white dark:bg-dark-800 border border-dark-200 dark:border-dark-700 rounded-xl shadow-dark overflow-hidden z-50"
                 >
                   <div className="p-4 border-b border-dark-100 dark:border-dark-700 flex items-center gap-3">
-                    <Avatar name={user?.name || 'Guest User'} size="md" showRing />
+                    <Avatar name={user?.name || 'User'} size="md" showRing />
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm text-dark-900 dark:text-dark-100 truncate">{user?.name}</p>
                       <p className="text-xs text-dark-400 truncate">{user?.title || 'Member'}</p>

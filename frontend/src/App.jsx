@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { useAuth } from './context/AuthContext';
 import ErrorBoundary from './components/ui/ErrorBoundary';
-import CommandPalette from './components/ui/CommandPalette';
 import LandingPage from './pages/LandingPage';
 
 // Lazy-loaded pages (code splitting)
@@ -51,7 +50,6 @@ const App = () => {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-        <CommandPalette />
         <AnimatePresence mode="wait">
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>

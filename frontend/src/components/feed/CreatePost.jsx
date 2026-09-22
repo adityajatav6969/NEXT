@@ -93,27 +93,12 @@ const CreatePost = () => {
     }
   };
 
-  const isGuest = user?.role === 'guest';
-
-  if (isGuest) {
-    return (
-      <div className="card p-5 text-center bg-brand-50/50 dark:bg-brand-900/10 border border-brand-100 dark:border-brand-900/30">
-        <h3 className="text-lg font-bold text-dark-900 dark:text-dark-100 mb-2">Join the Conversation</h3>
-        <p className="text-sm text-dark-500 dark:text-dark-400 mb-4 max-w-md mx-auto">
-          Create an account to share your thoughts, connect with developers, and like posts.
-        </p>
-        <button onClick={() => window.location.href = '/signup'} className="btn-brand py-2 px-6">
-          Sign Up Now
-        </button>
-      </div>
-    );
-  }
 
   return (
     <>
       <div className="card p-4">
         <div className="flex items-center gap-3">
-          <Avatar name={user?.name || 'Guest'} size="md" showRing />
+          <Avatar name={user?.name || 'User'} size="md" showRing />
           <button
             onClick={() => setOpen(true)}
             className="flex-1 text-left px-4 py-2.5 bg-dark-50 dark:bg-dark-700/50 border border-dark-200 dark:border-dark-700 rounded-full text-sm text-dark-400 hover:border-brand-400 hover:bg-brand-50/50 dark:hover:bg-brand-900/10 transition-all"
@@ -159,9 +144,9 @@ const CreatePost = () => {
 
                 <div className="p-4 overflow-y-auto">
                   <div className="flex items-center gap-3 mb-4">
-                    <Avatar name={user?.name || 'Guest'} size="md" showRing />
+                    <Avatar name={user?.name || 'User'} size="md" showRing />
                     <div>
-                      <p className="font-semibold text-sm text-dark-900 dark:text-dark-100">{user?.name || 'Guest User'}</p>
+                      <p className="font-semibold text-sm text-dark-900 dark:text-dark-100">{user?.name || 'User'}</p>
                     </div>
                   </div>
 

@@ -47,10 +47,6 @@ export const getJobById = async (req, res) => {
 // @access  Private
 export const applyToJob = async (req, res) => {
   try {
-    if (req.user.role === 'guest') {
-      return res.status(403).json({ message: 'Guest users cannot apply to jobs.' });
-    }
-
     const job = await Job.findById(req.params.id);
     if (!job) {
       return res.status(404).json({ message: 'Job not found' });

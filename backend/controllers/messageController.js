@@ -81,10 +81,6 @@ export const getMessages = async (req, res) => {
 // @access  Private
 export const sendMessage = async (req, res) => {
   try {
-    if (req.user.role === 'guest') {
-      return res.status(403).json({ message: 'Guest users cannot send messages.' });
-    }
-
     const { userId } = req.params;
     const { text } = matchedData(req, {
       includeOptionals: true,

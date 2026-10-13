@@ -7,28 +7,19 @@ import { usePosts } from '../../context/PostContext';
 import Avatar from '../ui/Avatar';
 import { formatNumber, formatTimeAgo } from '../../utils/helpers';
 
-const reactions = ['👍', '❤️', '🎉', '🔥', '💡', '🚀'];
-
 const PostCard = ({ post }) => {
   const { user } = useAuth();
   const { likePost, savePost } = usePosts();
-  const [showReactions, setShowReactions] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [comment, setComment] = useState('');
   const [localComments, setLocalComments] = useState([]);
-  const [reaction, setReaction] = useState(null);
 
   // Map backend fields to frontend expected format
   const author = post.author || post.user || { name: 'Unknown User' };
   const timeDisplay = post.timeAgo || formatTimeAgo(post.createdAt || post.updatedAt);
   const likesCount = Array.isArray(post.likes) ? post.likes.length : (post.likes || 0);
   const commentsCount = Array.isArray(post.comments) ? post.comments.length : (post.comments || 0);
-  const handleReact = (r) => {
-    setReaction(reaction === r ? null : r);
-    setShowReactions(false);
-    if (!post.isLiked) likePost(post._id || post.id);
-  };
 
   const handleComment = (e) => {
     e.preventDefault();
@@ -103,16 +94,14 @@ const PostCard = ({ post }) => {
 
       {/* Stats */}
       <div className="px-4 py-2 border-t border-dark-100 dark:border-dark-700/50 flex items-center justify-between text-xs text-dark-400">
-        <div className="flex items-center gap-1">
-          <div className="flex -space-x-0.5">
-            {['👍', '❤️', '🔥'].map((r, i) => (
-              <span key={i} className="text-xs">{r}</span>
-            ))}
-          </div>
-          <span>{formatNumber(likesCount)}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-full bg-brand-500/10 text-brand-500 flex items-center justify-center">
+            <ThumbsUp className="w-2.5 h-2.5" />
+          </span>
+          <span>{formatNumber(likesCount)} {likesCount === 1 ? 'like' : 'likes'}</span>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowComments(!showComments)}>
+          <button onClick={() => setShowComments(!showComments)} className="hover:underline">
             {formatNumber(commentsCount + localComments.length)} comments
           </button>
         </div>
@@ -120,49 +109,21 @@ const PostCard = ({ post }) => {
 
       {/* Actions */}
       <div className="px-4 py-1 border-t border-dark-100 dark:border-dark-700/50 flex items-center gap-1">
-        {/* Like with reactions */}
-        <div className="relative flex-1">
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onMouseEnter={() => setShowReactions(true)}
-            onMouseLeave={() => setTimeout(() => setShowReactions(false), 300)}
-            onClick={() => {
-              likePost(post._id || post.id);
-            }}
-            className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors ${
-              post.isLiked 
-                ? 'text-brand-500 bg-brand-50 dark:bg-brand-900/20' 
-                : 'text-dark-500 dark:text-dark-400 hover:bg-dark-100 dark:hover:bg-dark-700'
-            }`}
-          >
-            {reaction ? <span className="text-base">{reaction}</span> : <ThumbsUp className="w-4 h-4" />}
-            <span>Like</span>
-          </motion.button>
-
-          {/* Reaction picker */}
-          <AnimatePresence>
-            {showReactions && (
-              <motion.div
-                initial={{ opacity: 0, y: 8, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 8, scale: 0.9 }}
-                onMouseEnter={() => setShowReactions(true)}
-                onMouseLeave={() => setShowReactions(false)}
-                className="absolute bottom-full left-0 mb-2 flex items-center gap-1 p-2 bg-white dark:bg-dark-800 border border-dark-200 dark:border-dark-700 rounded-2xl shadow-dark z-10"
-              >
-                {reactions.map(r => (
-                  <button
-                    key={r}
-                    onClick={() => handleReact(r)}
-                    className="text-xl hovex:scale-125 transition-transform hover:scale-125 p-1"
-                  >
-                    {r}
-                  </button>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        {/* Like Button */}
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={() => {
+            likePost(post._id || post.id);
+          }}
+          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors ${
+            post.isLiked 
+              ? 'text-brand-500 bg-brand-50 dark:bg-brand-900/20' 
+              : 'text-dark-500 dark:text-dark-400 hover:bg-dark-100 dark:hover:bg-dark-700'
+          }`}
+        >
+          <ThumbsUp className={`w-4 h-4 ${post.isLiked ? 'fill-current' : ''}`} />
+          <span>Like</span>
+        </motion.button>
 
         <button
           onClick={() => setShowComments(!showComments)}

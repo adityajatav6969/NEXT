@@ -20,7 +20,7 @@ export default defineConfig({
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-ui': ['framer-motion', 'lucide-react'],
-          'vendor-data': ['axios', '@tanstack/react-query', 'socket.io-client'],
+          'vendor-data': ['axios', '@tanstack/react-query'],
         },
       },
     },

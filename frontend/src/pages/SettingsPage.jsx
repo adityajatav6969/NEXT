@@ -16,7 +16,6 @@ const SettingsPage = () => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     title: user?.title || '',
-    company: user?.company || '',
     location: user?.location || '',
     website: user?.website || '',
   });
@@ -71,8 +70,7 @@ const SettingsPage = () => {
   const menuItems = [
     { id: 'account', label: 'Account Preferences', icon: User },
     { id: 'security', label: 'Sign in & Security', icon: Lock },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'privacy', label: 'Data Privacy', icon: Shield },
+
   ];
 
   const handleLogout = async () => {
@@ -122,7 +120,6 @@ const SettingsPage = () => {
                   {[
                     { label: 'Full Name', key: 'name' },
                     { label: 'Job Title', key: 'title' },
-                    { label: 'Company', key: 'company' },
                     { label: 'Location', key: 'location' },
                     { label: 'Website URL', key: 'website', placeholder: 'https://...' },
                   ].map(({ label, key, placeholder }) => (
@@ -201,61 +198,6 @@ const SettingsPage = () => {
               </div>
             )}
 
-            {activeTab === 'notifications' && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-lg font-bold text-dark-900 dark:text-dark-100">Notifications</h2>
-                  <p className="text-sm text-dark-400">Choose what updates you want to receive.</p>
-                </div>
-
-                <div className="space-y-4">
-                  {[
-                    { title: 'Email Notifications', desc: 'Receive daily digests and important updates via email.' },
-                    { title: 'Push Notifications', desc: 'Get real-time alerts for mentions and direct messages.' },
-                    { title: 'Marketing Communications', desc: 'Receive platform updates, features, and partner offers.' },
-                  ].map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-dark-50 dark:bg-dark-800/50 rounded-xl border border-dark-100 dark:border-dark-700">
-                      <div>
-                        <p className="font-medium text-dark-900 dark:text-dark-100">{item.title}</p>
-                        <p className="text-sm text-dark-500">{item.desc}</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" className="sr-only peer" defaultChecked={index < 2} />
-                        <div className="w-11 h-6 bg-dark-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 dark:peer-focus:ring-brand-800 rounded-full peer dark:bg-dark-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-brand-500"></div>
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'privacy' && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-lg font-bold text-dark-900 dark:text-dark-100">Data & Privacy</h2>
-                  <p className="text-sm text-dark-400">Control your visibility and data usage.</p>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="p-4 bg-dark-50 dark:bg-dark-800/50 rounded-xl border border-dark-100 dark:border-dark-700">
-                    <p className="font-medium text-dark-900 dark:text-dark-100 mb-1">Profile Visibility</p>
-                    <select className="input-base">
-                      <option>Public (Everyone on the internet)</option>
-                      <option>Connections Only</option>
-                      <option>Private</option>
-                    </select>
-                  </div>
-
-                  <div className="p-4 bg-rose-50 dark:bg-rose-900/10 rounded-xl border border-rose-100 dark:border-rose-900/30">
-                    <p className="font-medium text-rose-600 dark:text-rose-400 mb-1">Danger Zone</p>
-                    <p className="text-sm text-rose-500/80 mb-4">Permanently delete your account and all associated data.</p>
-                    <button className="px-4 py-2 bg-rose-500 text-white rounded-lg text-sm font-medium hover:bg-rose-600 transition-colors">
-                      Delete Account
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </motion.div>
         </div>
       </div>

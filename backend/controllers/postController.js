@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { matchedData } from 'express-validator';
 import Post from '../models/Post.js';
 import ImageKit from 'imagekit';
@@ -65,8 +66,8 @@ export const getPosts = async (req, res) => {
       query.user = req.query.userId;
     }
 
-    const posts = await Post.find(query)
-      .populate('user', 'name avatar title company')
+    const posts = await Post.find(mongoose.trusted(query))
+      .populate('user', 'name avatar title')
       .populate('comments.user', 'name avatar')
       .sort({ _id: -1 })
       .limit(limit + 1)
@@ -109,7 +110,7 @@ export const createPost = async (req, res) => {
     });
 
     const createdPost = await post.save();
-    await createdPost.populate('user', 'name avatar title company');
+    await createdPost.populate('user', 'name avatar title');
 
 
 

@@ -14,9 +14,10 @@ const JobsPage = lazy(() => import('./pages/JobsPage'));
 const NetworkPage = lazy(() => import('./pages/NetworkPage'));
 const MessagesPage = lazy(() => import('./pages/MessagesPage'));
 const ExplorePage = lazy(() => import('./pages/ExplorePage'));
-const CompaniesPage = lazy(() => import('./pages/CompaniesPage'));
+
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const AudiencePage = lazy(() => import('./pages/AudiencePage'));
+
 
 const LoadingSpinner = () => (
   <div className="h-screen w-full flex items-center justify-center bg-dark-50 dark:bg-dark-950">
@@ -66,10 +67,10 @@ const App = () => {
               <Route path="/network" element={isAuthenticated ? <NetworkPage /> : <Navigate to="/login" replace />} />
               <Route path="/messages" element={isAuthenticated ? <MessagesPage /> : <Navigate to="/login" replace />} />
               <Route path="/explore" element={isAuthenticated ? <ExplorePage /> : <Navigate to="/login" replace />} />
-              <Route path="/companies" element={isAuthenticated ? <CompaniesPage /> : <Navigate to="/login" replace />} />
+
 
               <Route path="/settings" element={isAuthenticated ? <SettingsPage /> : <Navigate to="/login" replace />} />
-              <Route path="/forgot-password" element={<LoginPage />} />
+
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>

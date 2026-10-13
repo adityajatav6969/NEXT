@@ -61,7 +61,7 @@ const PostCard = ({ post }) => {
                   <BadgeCheck className="w-4 h-4 text-brand-500 flex-shrink-0" />
                 )}
               </div>
-              <p className="text-xs text-dark-400">{author.title || author.company}</p>
+              <p className="text-xs text-dark-400">{author.title}</p>
               <p className="text-xs text-dark-300">{timeDisplay}</p>
             </div>
           </div>
@@ -115,7 +115,6 @@ const PostCard = ({ post }) => {
           <button onClick={() => setShowComments(!showComments)}>
             {formatNumber(commentsCount + localComments.length)} comments
           </button>
-          <span>{formatNumber(post.shares || 0)} shares</span>
         </div>
       </div>
 
@@ -178,16 +177,6 @@ const PostCard = ({ post }) => {
           <span>Share</span>
         </button>
 
-        <button
-          onClick={() => {
-            savePost(post._id || post.id);
-          }}
-          className={`flex items-center justify-center p-2 rounded-lg transition-colors ${
-            post.isSaved ? 'text-brand-500' : 'text-dark-500 dark:text-dark-400 hover:bg-dark-100 dark:hover:bg-dark-700'
-          }`}
-        >
-          <Bookmark className={`w-4 h-4 ${post.isSaved ? 'fill-current' : ''}`} />
-        </button>
       </div>
 
       {/* Comments Section */}

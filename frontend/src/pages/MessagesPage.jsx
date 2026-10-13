@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
@@ -9,7 +10,7 @@ import { formatTimeAgo } from '../utils/helpers';
 import { Send, Smile, Paperclip, Phone, Video, MoreHorizontal, Search, Check, CheckCheck, ArrowLeft } from 'lucide-react';
 
 const MessagesPage = () => {
-  const { user: currentUser, socket } = useAuth();
+  const { user: currentUser } = useAuth();
   const location = useLocation();
   const targetUser = location.state?.targetUser;
 
@@ -20,6 +21,7 @@ const MessagesPage = () => {
   const [typing, setTyping] = useState(false);
   const [mobileView, setMobileView] = useState(targetUser ? 'chat' : 'list'); // 'list' | 'chat'
   const bottomRef = useRef(null);
+  const [socket, setSocket] = useState(null);
 
   const activeConv = conversations.find(c => c.user._id === activeConversationId);
 
@@ -79,58 +81,98 @@ const MessagesPage = () => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, typing]);
 
+  // --- Socket.IO Setup ---
+  useEffect(() => {
+    if (!currentUser?._id) return;
+    
+    // Connect to Socket.IO using the base API URL (remove '/api' from the end if present)
+    const backendUrl = (import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`).replace('/api', '');
+    const newSocket = io(backendUrl, {
+      query: { userId: currentUser._id }
+    });
+    
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.close();
+    };
+  }, [currentUser]);
+
+  // --- Real-time Message Listener ---
   useEffect(() => {
     if (!socket) return;
-    
-    // Listen for incoming messages
-    const handleReceiveMessage = (newMessage) => {
-      const senderId = newMessage.sender?._id || newMessage.sender;
 
-      // If the message belongs to the active conversation, append it
-      if (activeConversationId && senderId === activeConversationId) {
-        setMessages(prev => (prev.some(message => message._id === newMessage._id) ? prev : [...prev, newMessage]));
-        api.put(`/messages/${senderId}/read`).catch(() => {});
-      }
-      
-      // Update conversations list summary
-      setConversations(prev => {
-        const existingInfo = prev.find(c => c.user._id === senderId);
-        const newConversations = prev.filter(c => c.user._id !== senderId);
+    const handleNewMessage = (message) => {
+      // Check if message belongs to the currently active conversation
+      const isForActiveConv = 
+        (message.sender._id === activeConversationId) || 
+        (message.recipient._id === activeConversationId);
+
+      if (isForActiveConv) {
+        setMessages((prev) => {
+          // Avoid duplicate messages
+          if (prev.some(m => m._id === message._id)) return prev;
+          return [...prev, message];
+        });
         
-        return [{
-          user: existingInfo ? existingInfo.user : newMessage.sender,
-          lastMessage: newMessage,
-          unreadCount: activeConversationId === senderId ? 0 : (existingInfo?.unreadCount || 0) + 1,
-        }, ...newConversations];
+        // Mark as read immediately if it's the active conversation and sent to us
+        if (message.recipient._id === currentUser._id && !message.isRead) {
+           api.put(`/messages/${activeConversationId}/read`).catch(console.error);
+        }
+      }
+
+      // Update conversations list (last message & unread count)
+      setConversations((prev) => {
+        const otherUserId = message.sender._id === currentUser._id ? message.recipient._id : message.sender._id;
+        const existingConv = prev.find(c => c.user._id === otherUserId);
+        
+        // Only increment unread if we receive it (not sent by us) AND it's not the active conversation
+        const unreadIncrement = (message.sender._id !== currentUser._id && activeConversationId !== otherUserId) ? 1 : 0;
+
+        if (existingConv) {
+          const newConversations = prev.filter(c => c.user._id !== otherUserId);
+          return [{
+            user: existingConv.user,
+            lastMessage: message,
+            unreadCount: existingConv.unreadCount + unreadIncrement,
+            updatedAt: new Date().toISOString()
+          }, ...newConversations];
+        } else {
+          // If it's a new conversation, construct the other user object
+          const otherUser = message.sender._id === currentUser._id ? message.recipient : message.sender;
+          return [{
+            user: otherUser,
+            lastMessage: message,
+            unreadCount: unreadIncrement,
+            updatedAt: new Date().toISOString()
+          }, ...prev];
+        }
       });
     };
 
-    socket.on('receive_message', handleReceiveMessage);
-    return () => socket.off('receive_message', handleReceiveMessage);
-  }, [socket, activeConversationId]);
+    socket.on('newMessage', handleNewMessage);
+    
+    return () => {
+      socket.off('newMessage', handleNewMessage);
+    };
+  }, [socket, activeConversationId, currentUser]);
+
 
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!text.trim() || !activeConversationId) return;
+    if (!text.trim() || !activeConversationId || !socket) return;
     
     const messageText = text;
     setText('');
     
     try {
-      const { data } = await api.post(`/messages/${activeConversationId}`, { text: messageText });
-      setMessages(prev => [...prev, data]);
-      setConversations(prev => {
-        const existingInfo = prev.find(c => c.user._id === activeConversationId);
-        const newConversations = prev.filter(c => c.user._id !== activeConversationId);
-        return [{
-          user: existingInfo.user,
-          lastMessage: data,
-          unreadCount: 0,
-        }, ...newConversations];
+      socket.emit('sendMessage', {
+        sender: currentUser._id,
+        recipient: activeConversationId,
+        text: messageText
       });
-      
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to send message');
+      alert('Failed to send message');
     }
   };
 
@@ -139,7 +181,7 @@ const MessagesPage = () => {
     setMobileView('chat');
   };
 
-  const ConversationList = () => (
+  const renderConversationList = () => (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-dark-100 dark:border-dark-700">
         <h2 className="font-semibold text-dark-900 dark:text-dark-100 mb-3">Messages</h2>
@@ -177,7 +219,7 @@ const MessagesPage = () => {
     </div>
   );
 
-  const ChatPanel = () => (
+  const renderChatPanel = () => (
     <div className="flex flex-col h-full min-w-0">
       {/* Header */}
       <div className="flex items-center justify-between p-3 sm:p-4 border-b border-dark-100 dark:border-dark-700 gap-2">
@@ -282,18 +324,18 @@ const MessagesPage = () => {
       <div className="max-w-5xl mx-auto">
         {/* Mobile: show list or chat panel exclusively */}
         <div className="md:hidden card overflow-hidden" style={{ height: 'calc(100dvh - 8rem)', minHeight: '400px' }}>
-          {mobileView === 'list' ? <ConversationList /> : activeConv ? <ChatPanel /> : <ConversationList />}
+          {mobileView === 'list' ? renderConversationList() : activeConv ? renderChatPanel() : renderConversationList()}
         </div>
 
         {/* Desktop: side-by-side */}
         <div className="hidden md:flex card overflow-hidden" style={{ height: 'calc(100vh - 7rem)', minHeight: '500px' }}>
           {/* Sidebar */}
           <div className="w-72 flex-shrink-0 border-r border-dark-200 dark:border-dark-700">
-            <ConversationList />
+            {renderConversationList()}
           </div>
           {/* Chat */}
           {activeConv ? (
-            <ChatPanel />
+            renderChatPanel()
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-dark-400 bg-dark-50/50 dark:bg-dark-800/20">
               <div className="w-16 h-16 rounded-full bg-dark-100 dark:bg-dark-700 flex items-center justify-center mb-4 text-brand-500">

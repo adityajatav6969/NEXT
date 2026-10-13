@@ -1,12 +1,42 @@
 import Job from '../models/Job.js';
 
+// @desc    Create a job
+// @route   POST /api/jobs
+// @access  Private
+export const createJob = async (req, res) => {
+  try {
+    const { title, companyName, companyLogo, description, location, type, salaryRange, tags } = req.body;
+    
+    if (!title || !companyName || !description || !location) {
+      return res.status(400).json({ message: 'Please provide all required fields' });
+    }
+
+    const job = await Job.create({
+      title,
+      companyName,
+      companyLogo: companyLogo || 'https://via.placeholder.com/150',
+      description,
+      location,
+      type: type || 'Full-time',
+      salaryRange: salaryRange || 'Not Specified',
+      tags: tags || [],
+      postedBy: req.user._id,
+    });
+
+    res.status(201).json(job);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Get all active jobs
 // @route   GET /api/jobs
 // @access  Private
 export const getJobs = async (req, res) => {
   try {
     const jobs = await Job.find({ isActive: true })
-      .populate('company', 'name logo location industry')
+      .populate('postedBy', '_id name avatar')
+      .populate('applicants', '_id name avatar title')
       .sort({ createdAt: -1 });
     
     // Attach hasApplied for current user
@@ -27,7 +57,9 @@ export const getJobs = async (req, res) => {
 // @access  Private
 export const getJobById = async (req, res) => {
   try {
-    const job = await Job.findById(req.params.id).populate('company');
+    const job = await Job.findById(req.params.id)
+      .populate('postedBy', '_id name avatar')
+      .populate('applicants', '_id name avatar title');
     if (!job) {
       return res.status(404).json({ message: 'Job not found' });
     }

@@ -7,10 +7,13 @@ const jobSchema = new mongoose.Schema(
       required: [true, 'Please add a job title'],
       trim: true,
     },
-    company: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Company',
+    companyName: {
+      type: String,
       required: true,
+    },
+    companyLogo: {
+      type: String,
+      default: 'https://via.placeholder.com/150',
     },
     description: {
       type: String,
@@ -40,6 +43,11 @@ const jobSchema = new mongoose.Schema(
         ref: 'User',
       },
     ],
+    postedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -50,7 +58,7 @@ const jobSchema = new mongoose.Schema(
   }
 );
 
-jobSchema.index({ company: 1 });
+jobSchema.index({ companyName: 1 });
 jobSchema.index({ isActive: 1, createdAt: -1 });
 
 const Job = mongoose.model('Job', jobSchema);

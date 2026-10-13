@@ -49,14 +49,10 @@ const RightSidebar = () => {
               <p className="text-xs text-dark-400 truncate">{user?.title || 'Member'}</p>
             </div>
           </Link>
-          <div className="grid grid-cols-2 gap-1 pt-2 border-t border-dark-100 dark:border-dark-700">
+          <div className="pt-2 border-t border-dark-100 dark:border-dark-700">
             <div className="text-center">
               <p className="text-sm font-bold text-dark-900 dark:text-dark-100">{formatNumber(user?.connections || 0)}</p>
               <p className="text-[10px] text-dark-400">Connections</p>
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-bold text-dark-900 dark:text-dark-100">{formatNumber(user?.profileViews || 0)}</p>
-              <p className="text-[10px] text-dark-400">Profile Views</p>
             </div>
           </div>
         </div>

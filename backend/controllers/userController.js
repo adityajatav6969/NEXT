@@ -1,7 +1,6 @@
 import { matchedData } from 'express-validator';
 import mongoose from 'mongoose';
 import User from '../models/User.js';
-import { io } from '../server.js';
 import { sanitizeUser } from '../utils/auth.js';
 
 // @desc    Get user profile by ID and increment views
@@ -10,9 +9,9 @@ import { sanitizeUser } from '../utils/auth.js';
 export const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
-      .select('-password -tokenVersion')
-      .populate('followers', 'name avatar title company')
-      .populate('following', 'name avatar title company');
+      .select('-password')
+      .populate('followers', 'name avatar title')
+      .populate('following', 'name avatar title');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -20,10 +19,7 @@ export const getUserProfile = async (req, res) => {
 
     const isOwnProfile = req.user._id.toString() === user._id.toString();
 
-    if (!isOwnProfile) {
-      user.profileViews += 1;
-      await user.save();
-    }
+
 
     return res.json(sanitizeUser(user, { includeEmail: isOwnProfile }));
   } catch (error) {
@@ -43,13 +39,9 @@ export const updateUserProfile = async (req, res) => {
     }
 
 
-    const updates = matchedData(req, {
-      includeOptionals: true,
-      onlyValidData: true,
-      locations: ['body'],
-    });
+    const updates = req.body;
 
-    const basicFields = ['name', 'title', 'company', 'location', 'bio', 'website'];
+    const basicFields = ['name', 'title', 'location', 'bio', 'website'];
     basicFields.forEach((field) => {
       if (Object.prototype.hasOwnProperty.call(updates, field)) {
         user[field] = updates[field];
@@ -134,8 +126,8 @@ export const toggleFollow = async (req, res) => {
 export const getNetwork = async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
-      .populate('following', 'name title company avatar location skills followers role')
-      .populate('followers', 'name title company avatar location skills followers role');
+      .populate('following', 'name title avatar location skills followers role')
+      .populate('followers', 'name title avatar location skills followers role');
 
     // Filter out any nulls in case referenced users were deleted
     const validFollowing = (user.following || []).filter(u => u != null);
@@ -145,7 +137,7 @@ export const getNetwork = async (req, res) => {
     const suggested = await User.find({ _id: mongoose.trusted({ $nin: excludedIds }) })
       .sort({ createdAt: -1 })
       .limit(15)
-      .select('name title company avatar location skills followers role');
+      .select('name title avatar location skills followers role');
 
     return res.json({
       following: validFollowing,
@@ -166,7 +158,7 @@ export const getExploreUsers = async (req, res) => {
     // Show all users except the current one, sorted by newest first
     const users = await User.find({ _id: mongoose.trusted({ $ne: req.user._id }) })
       .sort({ createdAt: -1 })
-      .select('name title company avatar location skills followers role');
+      .select('name title avatar location skills followers role');
 
     const currentUser = await User.findById(req.user._id).select('following');
     const followingStrs = (currentUser.following || []).map((id) => id.toString());

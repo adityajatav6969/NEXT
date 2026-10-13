@@ -1,7 +1,7 @@
+import mongoose from 'mongoose';
 import { matchedData } from 'express-validator';
 import Message from '../models/Message.js';
 import User from '../models/User.js';
-import { io } from '../server.js';
 
 // @desc    Get all conversations (unique users chatted with)
 // @route   GET /api/messages/conversations
@@ -10,9 +10,9 @@ export const getConversations = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    const messages = await Message.find({
+    const messages = await Message.find(mongoose.trusted({
       $or: [{ sender: userId }, { recipient: userId }],
-    }).sort({ createdAt: -1 });
+    })).sort({ createdAt: -1 });
 
     const conversationMap = new Map();
 
@@ -33,7 +33,7 @@ export const getConversations = async (req, res) => {
     });
 
     const userIds = Array.from(conversationMap.keys());
-    const users = await User.find({ _id: { $in: userIds } }, 'name avatar title');
+    const users = await User.find(mongoose.trusted({ _id: { $in: userIds } }), 'name avatar title');
 
     const result = users
       .map((user) => {
@@ -48,6 +48,7 @@ export const getConversations = async (req, res) => {
 
     return res.json(result);
   } catch (error) {
+    console.error('getConversations Error:', error);
     return res.status(500).json({ message: error.message });
   }
 };
@@ -60,12 +61,12 @@ export const getMessages = async (req, res) => {
     const { userId } = req.params;
     const currentUserId = req.user._id;
 
-    const messages = await Message.find({
+    const messages = await Message.find(mongoose.trusted({
       $or: [
         { sender: currentUserId, recipient: userId },
         { sender: userId, recipient: currentUserId },
       ],
-    })
+    }))
       .sort({ createdAt: 1 })
       .populate('sender', 'name avatar title')
       .populate('recipient', 'name avatar title');
@@ -82,11 +83,7 @@ export const getMessages = async (req, res) => {
 export const sendMessage = async (req, res) => {
   try {
     const { userId } = req.params;
-    const { text } = matchedData(req, {
-      includeOptionals: true,
-      onlyValidData: true,
-      locations: ['body'],
-    });
+    const { text } = req.body;
 
     if (userId === req.user._id.toString()) {
       return res.status(400).json({ message: 'You cannot send messages to yourself' });
@@ -106,7 +103,6 @@ export const sendMessage = async (req, res) => {
     await message.populate('sender', 'name avatar title');
     await message.populate('recipient', 'name avatar title');
 
-    io.to(userId).emit('receive_message', message);
 
     return res.status(201).json(message);
   } catch (error) {

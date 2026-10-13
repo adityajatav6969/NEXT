@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import User from '../models/User.js';
 import {
   clearAuthCookie,
@@ -104,7 +103,6 @@ export const changePassword = async (req, res) => {
     }
 
     user.password = newPassword;
-    user.tokenVersion += 1;
     await user.save();
 
     return issueAuthResponse(res, user);
@@ -112,3 +110,4 @@ export const changePassword = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+

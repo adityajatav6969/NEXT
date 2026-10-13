@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '../components/layout/Layout';
+import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import { Bookmark, MapPin, Users, Briefcase, Clock, Filter, X, Check, ChevronDown, Search, Building2 } from 'lucide-react';
 import { formatNumber } from '../utils/helpers';
+import CreateJob from '../components/jobs/CreateJob';
 
 const companyLogoBg = (name) => {
   const colors = ['from-blue-500 to-blue-600', 'from-purple-500 to-purple-600', 'from-rose-500 to-rose-600', 'from-emerald-500 to-emerald-600', 'from-amber-500 to-amber-600', 'from-cyan-500 to-cyan-600'];
@@ -11,13 +13,16 @@ const companyLogoBg = (name) => {
 };
 
 const JobsPage = () => {
+  const { user } = useAuth();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState(null);
-  const [filter, setFilter] = useState('all');
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [locationFilter, setLocationFilter] = useState('');
-  const [expFilter, setExpFilter] = useState('');
+  const [showApplicants, setShowApplicants] = useState(false);
+
+  const handleJobCreated = (newJob) => {
+    setJobs([newJob, ...jobs]);
+    if (!selectedJob) setSelectedJob(newJob);
+  };
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -45,16 +50,7 @@ const JobsPage = () => {
     }
   };
 
-  const filterOptions = ['all', 'full-time', 'remote', 'saved'];
-  const experiences = ['Junior', 'Mid-level', 'Senior', 'Staff', 'Principal'];
-
-  const filteredJobs = jobs.filter(j => {
-    if (filter === 'remote') return j.location === 'Remote' || j.type === 'Remote';
-    if (locationFilter && !j.location.toLowerCase().includes(locationFilter.toLowerCase())) return false;
-    return true;
-  });
-
-  const activeJob = selectedJob || filteredJobs[0];
+  const activeJob = selectedJob || jobs[0];
 
   if (loading) {
     return (
@@ -77,49 +73,6 @@ const JobsPage = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
               <input placeholder="Search jobs..." className="input-base pl-9" />
             </div>
-            <button
-              onClick={() => setFilterOpen(!filterOpen)}
-              className="flex items-center gap-2 btn-outline"
-            >
-              <Filter className="w-4 h-4" />
-              Filters
-              <ChevronDown className={`w-4 h-4 transition-transform ${filterOpen ? 'rotate-180' : ''}`} />
-            </button>
-          </div>
-
-          <AnimatePresence>
-            {filterOpen && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                <div className="flex flex-wrap gap-3 pt-3 mt-3 border-t border-dark-100 dark:border-dark-700">
-                  <div>
-                    <label className="text-xs font-medium text-dark-500 block mb-1">Location</label>
-                    <input value={locationFilter} onChange={e => setLocationFilter(e.target.value)} placeholder="e.g. San Francisco" className="input-base w-44" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-dark-500 block mb-1">Experience</label>
-                    <select value={expFilter} onChange={e => setExpFilter(e.target.value)} className="input-base w-36">
-                      <option value="">All levels</option>
-                      {experiences.map(e => <option key={e} value={e}>{e}</option>)}
-                    </select>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Filter tabs */}
-          <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar">
-            {filterOptions.map(f => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-3 py-1 rounded-full text-sm font-medium capitalize whitespace-nowrap transition-all ${
-                  filter === f ? 'bg-brand-500 text-white shadow-glow' : 'bg-dark-100 dark:bg-dark-700 text-dark-500 dark:text-dark-400 hover:bg-dark-200 dark:hover:bg-dark-600'
-                }`}
-              >
-                {f}
-              </button>
-            ))}
           </div>
         </div>
 
@@ -127,27 +80,28 @@ const JobsPage = () => {
         <div className="flex gap-4">
           {/* Job list */}
           <div className="w-full lg:w-80 xl:w-96 space-y-3 flex-shrink-0">
-            {filteredJobs.length === 0 && (
-              <div className="card p-8 text-center text-dark-400">No jobs found matching your criteria.</div>
+            <CreateJob onJobCreated={handleJobCreated} />
+            {jobs.length === 0 && (
+              <div className="card p-8 text-center text-dark-400">No jobs found.</div>
             )}
-            {filteredJobs.map((job) => (
+            {jobs.map((job) => (
               <motion.div
                 key={job._id}
                 whileHover={{ y: -2 }}
-                onClick={() => setSelectedJob(job)}
+                onClick={() => { setSelectedJob(job); setShowApplicants(false); }}
                 className={`card p-4 cursor-pointer transition-all ${activeJob?._id === job._id ? 'border-brand-500 shadow-glow' : ''}`}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${companyLogoBg(job.company?.name || 'Company')} flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden`}>
-                    {job.company?.logo && job.company.logo !== 'https://via.placeholder.com/150' ? (
-                      <img src={job.company.logo} alt={job.company.name} className="w-full h-full object-cover" />
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${companyLogoBg(job.companyName || 'Company')} flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden`}>
+                    {job.companyLogo && job.companyLogo !== 'https://via.placeholder.com/150' ? (
+                      <img src={job.companyLogo} alt={job.companyName} className="w-full h-full object-cover" />
                     ) : (
-                      (job.company?.name || 'C')[0]
+                      (job.companyName || 'C')[0]
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-sm text-dark-900 dark:text-dark-100">{job.title}</h3>
-                    <p className="text-sm text-dark-500 dark:text-dark-400">{job.company?.name}</p>
+                    <p className="text-sm text-dark-500 dark:text-dark-400">{job.companyName}</p>
                     <div className="flex items-center gap-2 mt-1 text-xs text-dark-400">
                       <MapPin className="w-3 h-3" />
                       <span>{job.location}</span>
@@ -177,16 +131,16 @@ const JobsPage = () => {
             >
               <div className="flex items-start justify-between mb-5">
                 <div className="flex items-start gap-4">
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${companyLogoBg(activeJob.company?.name || 'Company')} flex items-center justify-center text-white text-xl font-bold overflow-hidden`}>
-                    {activeJob.company?.logo && activeJob.company.logo !== 'https://via.placeholder.com/150' ? (
-                      <img src={activeJob.company.logo} alt={activeJob.company.name} className="w-full h-full object-cover" />
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${companyLogoBg(activeJob.companyName || 'Company')} flex items-center justify-center text-white text-xl font-bold overflow-hidden`}>
+                    {activeJob.companyLogo && activeJob.companyLogo !== 'https://via.placeholder.com/150' ? (
+                      <img src={activeJob.companyLogo} alt={activeJob.companyName} className="w-full h-full object-cover" />
                     ) : (
-                      (activeJob.company?.name || 'C')[0]
+                      (activeJob.companyName || 'C')[0]
                     )}
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-dark-900 dark:text-dark-100">{activeJob.title}</h2>
-                    <p className="text-dark-600 dark:text-dark-300">{activeJob.company?.name}</p>
+                    <p className="text-dark-600 dark:text-dark-300">{activeJob.companyName}</p>
                     <div className="flex items-center gap-3 mt-1 text-sm text-dark-400 flex-wrap">
                       <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{activeJob.location}</span>
                       <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" />{activeJob.type}</span>
@@ -216,22 +170,54 @@ const JobsPage = () => {
                 </span>
               </div>
 
-              <div className="flex gap-3 mt-5">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleApply(activeJob._id)}
-                  disabled={activeJob.hasApplied}
-                  className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                    activeJob.hasApplied
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center gap-2 cursor-default'
-                      : 'btn-brand text-center'
-                  }`}
-                >
-                  {activeJob.hasApplied ? <><Check className="w-4 h-4" /> Applied!</> : 'Apply Now'}
-                </motion.button>
-                <button className="btn-outline px-4 py-2.5">Message</button>
-              </div>
+              {((activeJob.postedBy?._id || activeJob.postedBy) === (user?._id || user?.id)) ? (
+                <div className="mt-5 border-t border-dark-100 dark:border-dark-700 pt-4">
+                  <button 
+                    onClick={() => setShowApplicants(!showApplicants)}
+                    className="btn-outline w-full py-2 mb-4 text-sm"
+                  >
+                    {showApplicants ? 'Hide Applicants' : 'View Applicants'}
+                  </button>
+                  
+                  {showApplicants && (
+                    <div className="space-y-3">
+                      {activeJob.applicants?.length > 0 ? (
+                        activeJob.applicants.map(applicant => (
+                          <div key={applicant._id} className="flex items-center gap-3 p-3 bg-dark-50 dark:bg-dark-800/50 rounded-xl border border-dark-100 dark:border-dark-700">
+                            <div className="w-10 h-10 rounded-full bg-brand-100 dark:bg-brand-900/40 flex items-center justify-center overflow-hidden flex-shrink-0 text-brand-600 dark:text-brand-400 font-semibold">
+                               {applicant.avatar && applicant.avatar !== 'https://via.placeholder.com/150' ? <img src={applicant.avatar} className="w-full h-full object-cover"/> : (applicant.name ? applicant.name[0] : 'U')}
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-dark-900 dark:text-dark-100">{applicant.name || 'Unknown User'}</p>
+                                <p className="text-xs text-dark-500 dark:text-dark-400">{applicant.title || 'User'}</p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center bg-dark-50 dark:bg-dark-800/30 rounded-xl">
+                          <p className="text-sm text-dark-400">No applicants yet.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex gap-3 mt-5">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleApply(activeJob._id)}
+                    disabled={activeJob.hasApplied}
+                    className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                      activeJob.hasApplied
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center gap-2 cursor-default'
+                        : 'btn-brand text-center'
+                    }`}
+                  >
+                    {activeJob.hasApplied ? <><Check className="w-4 h-4" /> Applied!</> : 'Apply Now'}
+                  </motion.button>
+                </div>
+              )}
             </motion.div>
           )}
         </div>

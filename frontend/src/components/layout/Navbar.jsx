@@ -65,10 +65,7 @@ const Navbar = () => {
 
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 flex-shrink-0 mr-1">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center shadow-glow flex-shrink-0">
-            <Zap className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-display font-bold text-lg gradient-text hidden sm:block">NextDevs</span>
+          <img src="/logo.png" alt="NextDevs Logo" className="h-8 w-auto object-contain" />
         </Link>
 
         {/* Desktop Search */}
@@ -93,7 +90,7 @@ const Navbar = () => {
               >
                 <div className="p-3 text-sm text-dark-400">Searching for "{searchQuery}"...</div>
                 <div className="border-t border-dark-100 dark:border-dark-700 p-1">
-                  {['People', 'Posts', 'Jobs', 'Companies'].map((cat) => (
+                  {['People', 'Posts', 'Jobs'].map((cat) => (
                     <button
                       key={cat}
                       className="w-full text-left px-3 py-2 text-sm text-dark-600 dark:text-dark-300 hover:bg-dark-100 dark:hover:bg-dark-700 rounded-lg transition-colors"

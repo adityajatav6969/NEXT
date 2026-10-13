@@ -9,13 +9,13 @@ import authRoutes from './routes/authRoutes.js';
 import postRoutes from './routes/postRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import jobRoutes from './routes/jobRoutes.js';
-import companyRoutes from './routes/companyRoutes.js';
+
 import messageRoutes from './routes/messageRoutes.js';
+import Message from './models/Message.js';
 // import notificationRoutes from './routes/notificationRoutes.js';
 import User from './models/User.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import {
-  extractTokenFromSocket,
   getAllowedOrigins,
   isAllowedOrigin,
   setNoStore,
@@ -25,7 +25,6 @@ import {
 dotenv.config();
 
 mongoose.set('strictQuery', true);
-mongoose.set('sanitizeFilter', true);
 
 const app = express();
 const httpServer = createServer(app);
@@ -47,42 +46,8 @@ const corsOptions = {
   maxAge: 86400,
 };
 
-export const io = new Server(httpServer, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ['GET', 'POST'],
-    credentials: true,
-  },
-  maxHttpBufferSize: 1e6,
-  connectTimeout: 10000,
-  pingTimeout: 20000,
-  pingInterval: 25000,
-});
+const io = new Server(httpServer, { cors: corsOptions });
 
-io.use(async (socket, next) => {
-  try {
-    const token = extractTokenFromSocket(socket);
-    if (!token) {
-      return next(new Error('Authentication required'));
-    }
-
-    const decoded = verifyAuthToken(token);
-    const user = await User.findById(decoded.id).select('_id tokenVersion');
-
-    if (!user) {
-      return next(new Error('Authentication required'));
-    }
-
-    if ((decoded.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
-      return next(new Error('Session expired'));
-    }
-
-    socket.data.userId = user._id.toString();
-    return next();
-  } catch {
-    return next(new Error('Invalid token'));
-  }
-});
 
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -101,7 +66,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/jobs', jobRoutes);
-app.use('/api/companies', companyRoutes);
+
 app.use('/api/messages', messageRoutes);
 // app.use('/api/notifications', notificationRoutes);
 
@@ -163,16 +128,44 @@ mongoose.connection.on('disconnected', () => {
 
 await connectDB();
 
-io.on('connection', (socket) => {
-  const userId = socket.data.userId;
-  console.log(`Client connected: ${socket.id} (user: ${userId})`);
+// --- Socket.IO MVP Implementation ---
+const userSockets = new Map();
 
-  socket.join(userId);
+io.on('connection', (socket) => {
+  const userId = socket.handshake.query.userId;
+  if (userId) {
+    userSockets.set(userId, socket.id);
+  }
+
+  socket.on('sendMessage', async (data) => {
+    try {
+      const { sender, recipient, text } = data;
+      
+      // Save message to MongoDB
+      const message = await Message.create({ sender, recipient, text });
+      await message.populate('sender', 'name avatar title');
+      await message.populate('recipient', 'name avatar title');
+
+      // Send to receiver if online
+      const recipientSocketId = userSockets.get(recipient);
+      if (recipientSocketId) {
+        io.to(recipientSocketId).emit('newMessage', message);
+      }
+      
+      // Send back to sender for instant update
+      socket.emit('newMessage', message);
+    } catch (err) {
+      console.error('Socket message error:', err);
+    }
+  });
 
   socket.on('disconnect', () => {
-    console.log(`Client disconnected: ${socket.id}`);
+    if (userId) {
+      userSockets.delete(userId);
+    }
   });
 });
+// ------------------------------------
 
 const PORT = process.env.PORT || 5000;
 
@@ -187,9 +180,6 @@ const gracefulShutdown = async (signal) => {
     console.log('HTTP server closed');
   });
 
-  io.close(() => {
-    console.log('Socket.io closed');
-  });
 
   try {
     await mongoose.connection.close();

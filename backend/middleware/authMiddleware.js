@@ -16,9 +16,6 @@ export const protect = async (req, res, next) => {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
-    if ((decoded.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
-      return res.status(401).json({ message: 'Session has expired. Please sign in again.' });
-    }
 
     req.user = user;
     return next();

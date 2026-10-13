@@ -68,7 +68,6 @@ export const signAuthToken = (user) => {
   return jwt.sign(
     {
       id: user._id.toString(),
-      tokenVersion: user.tokenVersion ?? 0,
     },
     getJwtSecret(),
     {
@@ -90,13 +89,19 @@ export const verifyAuthToken = (token) => {
   });
 };
 
-export const buildAuthCookieOptions = () => ({
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
-  path: '/',
-  maxAge: parseDurationToMs(getJwtConfig().expiresIn),
-});
+export const buildAuthCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    // 'none' is required for cross-origin cookies (Netlify frontend ↔ Railway backend).
+    // 'lax' is a safe default for same-origin development.
+    sameSite: isProduction ? 'none' : 'lax',
+    path: '/',
+    maxAge: parseDurationToMs(getJwtConfig().expiresIn),
+  };
+};
 
 export const setAuthCookie = (res, token) => {
   res.cookie(getCookieName(), token, buildAuthCookieOptions());
@@ -131,20 +136,11 @@ export const extractTokenFromRequest = (req) => {
   return parseCookies(req.headers.cookie)[getCookieName()];
 };
 
-export const extractTokenFromSocket = (socket) => {
-  const authToken = socket.handshake.auth?.token;
-  if (authToken) {
-    return authToken;
-  }
-
-  return parseCookies(socket.handshake.headers.cookie)[getCookieName()];
-};
 
 export const sanitizeUser = (user, { includeEmail = true } = {}) => {
   const data = typeof user.toObject === 'function' ? user.toObject() : { ...user };
 
   delete data.password;
-  delete data.tokenVersion;
   delete data.__v;
 
   if (!includeEmail) {

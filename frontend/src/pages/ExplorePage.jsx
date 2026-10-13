@@ -81,7 +81,7 @@ const ExplorePage = () => {
                       </Link>
                       {user.isVerified && <BadgeCheck className="w-3.5 h-3.5 text-brand-500" />}
                     </div>
-                    <p className="text-xs text-dark-400 truncate">{user.title} {user.company ? `· ${user.company}` : ''}</p>
+                    <p className="text-xs text-dark-400 truncate">{user.title}</p>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {(user.skills || []).slice(0, 3).map(s => <span key={s} className="tag text-[10px] py-0.5">{s}</span>)}
                     </div>

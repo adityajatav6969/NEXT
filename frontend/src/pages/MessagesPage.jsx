@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../context/AuthContext';
 import Avatar from '../components/ui/Avatar';
@@ -231,11 +231,13 @@ const MessagesPage = () => {
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
-          <Avatar name={activeConv.user.name} img={activeConv.user.avatar || activeConv.user.profilePicture} size="md" isOnline={true} />
-          <div className="min-w-0">
-            <p className="font-semibold text-sm text-dark-900 dark:text-dark-100 truncate">{activeConv.user.name}</p>
-            <p className="text-xs text-brand-500">Active</p>
-          </div>
+          <Link to={`/profile/${activeConv.user._id}`} className="flex items-center gap-2 sm:gap-3 min-w-0 hover:opacity-90 group">
+            <Avatar name={activeConv.user.name} img={activeConv.user.avatar || activeConv.user.profilePicture} size="md" isOnline={true} />
+            <div className="min-w-0">
+              <p className="font-semibold text-sm text-dark-900 dark:text-dark-100 group-hover:text-brand-500 transition-colors truncate">{activeConv.user.name}</p>
+              <p className="text-xs text-brand-500">Active</p>
+            </div>
+          </Link>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <button className="p-2 rounded-lg hover:bg-dark-100 dark:hover:bg-dark-700 transition-colors text-dark-400 hover:text-dark-700 dark:hover:text-dark-200"><Phone className="w-4 h-4" /></button>

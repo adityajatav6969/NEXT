@@ -67,17 +67,26 @@ const RightSidebar = () => {
             <div className="space-y-3">
               {followingUsers.map((u) => (
                 <div key={u._id} className="flex items-center gap-3">
-                  <Avatar name={u.name} size="sm" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-dark-800 dark:text-dark-200 truncate">{u.name}</p>
-                    <p className="text-xs text-dark-400 truncate">{u.title}</p>
-                    <p className="text-xs text-dark-300">{formatNumber(u.followersCount || u.followers?.length || 0)} followers</p>
-                  </div>
+                  <Link
+                    to={`/profile/${u._id}`}
+                    className="flex items-center gap-3 flex-1 min-w-0 group"
+                  >
+                    <Avatar name={u.name} size="sm" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-dark-800 dark:text-dark-200 group-hover:text-brand-500 transition-colors truncate">
+                        {u.name}
+                      </p>
+                      <p className="text-xs text-dark-400 truncate">{u.title || 'Member'}</p>
+                      <p className="text-xs text-dark-300">
+                        {formatNumber(u.followersCount || u.followers?.length || 0)} followers
+                      </p>
+                    </div>
+                  </Link>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleFollow(u._id)}
-                    className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium border rounded-full transition-all ${
+                    className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium border rounded-full transition-all flex-shrink-0 ${
                       u.isFollowing
                         ? 'border-dark-300 text-dark-500 bg-dark-50 hover:bg-dark-100 dark:border-dark-600 dark:text-dark-300 dark:bg-dark-800 dark:hover:bg-dark-700'
                         : 'border-brand-500/50 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20'

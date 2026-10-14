@@ -25,11 +25,14 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-dark-950 text-white overflow-hidden relative font-sans">
-      {/* Background glowing orbs */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-brand-500/20 rounded-full blur-[120px] animate-pulse-slow" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-accent-500/15 rounded-full blur-[150px] animate-pulse-slow" style={{ animationDelay: '1.5s' }} />
+    <div className="min-h-screen bg-[#060814] text-white overflow-hidden relative font-sans">
+      {/* Background design backdrop */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url('/landing-bg.png')` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#060814]/40 via-transparent to-[#060814]/70" />
       </div>
 
       {/* Navbar */}
@@ -87,8 +90,8 @@ const LandingPage = () => {
           className="mt-32 grid md:grid-cols-3 gap-8 text-left"
         >
           {features.map((feature, idx) => (
-            <div key={idx} className="p-6 rounded-2xl bg-dark-900/50 border border-dark-800 backdrop-blur-sm hover:border-dark-700 transition-colors group">
-              <div className="w-12 h-12 rounded-xl bg-dark-800 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
+            <div key={idx} className="p-6 rounded-2xl bg-dark-900/60 border border-white/10 backdrop-blur-md hover:border-brand-500/40 hover:bg-dark-900/80 transition-all duration-300 group shadow-lg">
+              <div className="w-12 h-12 rounded-xl bg-dark-800/80 border border-white/5 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
                 {feature.icon}
               </div>
               <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
@@ -118,9 +121,9 @@ const LandingPage = () => {
               <Link
                 key={audience.title}
                 to={`/audiences#${audience.anchor}`}
-                className="rounded-2xl border border-dark-800 bg-dark-900/60 backdrop-blur-sm p-6 hover:border-dark-700 hover:bg-dark-900 transition-colors"
+                className="rounded-2xl border border-white/10 bg-dark-900/60 backdrop-blur-md p-6 hover:border-brand-500/40 hover:bg-dark-900/80 transition-all duration-300 shadow-lg"
               >
-                <div className="w-11 h-11 rounded-xl bg-dark-800 flex items-center justify-center mb-4">
+                <div className="w-11 h-11 rounded-xl bg-dark-800/80 border border-white/5 flex items-center justify-center mb-4">
                   {audience.icon}
                 </div>
                 <h3 className="text-xl font-semibold mb-3">{audience.title}</h3>

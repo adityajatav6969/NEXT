@@ -37,12 +37,9 @@ const LoginPage = () => {
       <div className="absolute top-1/4 right-0 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Top Left Logo */}
-      <div className="absolute top-8 left-8 flex items-center gap-2 z-20">
-        <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center">
-          <Zap className="w-5 h-5 text-white" />
-        </div>
-        <span className="text-white font-bold text-lg">NextDevs</span>
-      </div>
+      <Link to="/" className="absolute top-8 left-8 flex items-center gap-2 z-20">
+        <img src="/logo.png" alt="NextDevs Logo" className="h-8 w-auto object-contain" />
+      </Link>
 
       {/* Back to Home Button */}
       <Link to="/" className="absolute top-8 right-8 z-20 flex items-center gap-2 text-sm text-dark-300 hover:text-white bg-dark-800/40 hover:bg-dark-700/60 px-4 py-2 rounded-xl backdrop-blur-md transition-all border border-dark-700/50">

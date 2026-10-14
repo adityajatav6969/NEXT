@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Zap, Users, Code, MessagesSquare, ArrowRight, BookOpen, GraduationCap, Briefcase } from 'lucide-react';
+import { Users, Code, MessagesSquare, ArrowRight, BookOpen, GraduationCap, Briefcase } from 'lucide-react';
 import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -34,12 +34,9 @@ const LandingPage = () => {
 
       {/* Navbar */}
       <nav className="relative z-10 flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center shadow-glow">
-            <Zap className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-bold font-display tracking-tight">NextDevs</span>
-        </div>
+        <Link to="/" className="flex items-center gap-2">
+          <img src="/logo.png" alt="NextDevs Logo" className="h-9 w-auto object-contain" />
+        </Link>
         <div className="flex items-center gap-4">
           <Link to="/audiences" className="hidden md:inline-flex px-4 py-2 rounded-xl text-sm font-medium text-dark-300 hover:text-white transition-colors">
             Who It's For
